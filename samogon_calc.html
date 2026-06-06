@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Калькулятор самогонщика</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="СамоКалк">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#eaecf0;color:#111;min-height:100vh;padding-bottom:30px}
+header{background:#1a1a2e;color:#fff;padding:15px 18px 13px;display:flex;align-items:center;gap:10px}
+header h1{font-size:17px;font-weight:700;letter-spacing:.01em}
+header span{font-size:22px;flex-shrink:0}
+.tabs{display:flex;overflow-x:auto;background:#13132b;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-bottom:1px solid #2a2a4e}
+.tabs::-webkit-scrollbar{display:none}
+.tb{flex-shrink:0;padding:11px 15px;color:rgba(255,255,255,.55);font-size:13px;font-weight:600;background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s;letter-spacing:.01em}
+.tb.on{color:#4ade80;border-bottom-color:#4ade80}
+.tab{display:none;padding:14px}
+.tab.on{display:block}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.card h2{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px}
+.desc{font-size:13px;color:#888;margin-bottom:16px;line-height:1.55}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:6px}
+.hint{font-size:12px;color:#777;background:#f5f5f5;border-radius:7px;padding:7px 10px;margin-bottom:7px;line-height:1.55;display:block;border-left:3px solid #d0d0d0}
+input[type=number],select{display:block;width:100%;padding:13px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:16px;color:#111;background:#fafafa;-webkit-appearance:none;appearance:none;transition:border-color .15s}
+input[type=number]:focus,select:focus{outline:none;border-color:#4ade80;background:#fff}
+.btn-calc{display:block;width:100%;padding:14px;background:#1a1a2e;color:#4ade80;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;letter-spacing:.02em;transition:opacity .15s}
+.btn-calc:active{opacity:.75}
+.result-box{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:15px;margin-bottom:12px;animation:fadein .25s}
+@keyframes fadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.result-box .rtitle{font-size:11px;font-weight:700;color:#166534;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+.rrow{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid #dcfce7}
+.rrow:last-child{border-bottom:none}
+.rrow .rl{font-size:13px;color:#555}
+.rrow .rv{font-size:15px;font-weight:700;color:#15803d;text-align:right;margin-left:8px}
+.note{font-size:12px;color:#854d0e;background:#fffbeb;border-left:3px solid #fcd34d;border-radius:0 6px 6px 0;padding:8px 10px;margin-top:10px;line-height:1.55}
+.warn{font-size:12px;color:#991b1b;background:#fef2f2;border-left:3px solid #f87171;border-radius:0 6px 6px 0;padding:8px 10px;margin-top:10px;line-height:1.55}
+.hcard{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.hhead{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;cursor:pointer;font-size:13px;font-weight:600;color:#555;user-select:none}
+.harrow{color:#bbb;font-size:11px;transition:transform .2s}
+.hhead.open .harrow{transform:rotate(180deg)}
+.hbody{display:none;border-top:1px solid #f0f0f0}
+.hbody.open{display:block}
+.hempty{padding:14px 16px;color:#bbb;font-size:13px;text-align:center}
+.hlist{list-style:none}
+.hitem{padding:11px 16px;border-bottom:1px solid #f8f8f8;font-size:12px}
+.hitem:last-child{border-bottom:none}
+.hi-t{color:#bbb;margin-bottom:3px;font-size:11px}
+.hi-i{color:#777;margin-bottom:2px;line-height:1.4}
+.hi-r{color:#15803d;font-weight:600}
+.dmode{flex:1;padding:10px;background:#f0f0f0;color:#666;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.dmode.on{background:#1a1a2e;color:#4ade80}
+.hclear{display:block;width:100%;padding:11px;background:none;border:none;border-top:1px solid #f0f0f0;color:#f87171;font-size:13px;cursor:pointer;text-align:center;font-weight:500}
+</style>
+</head>
+<body>
+
+<header>
+  <span>🥃</span>
+  <h1>Калькулятор самогонщика</h1>
+</header>
+
+<div class="tabs">
+  <button class="tb on" data-t="yield" onclick="ST(this)">Выход</button>
+  <button class="tb" data-t="mash" onclick="ST(this)">Брага</button>
+  <button class="tb" data-t="dilute" onclick="ST(this)">Разбавление</button>
+  <button class="tb" data-t="heads" onclick="ST(this)">Головы</button>
+  <button class="tb" data-t="blend" onclick="ST(this)">Смешивание</button>
+  <button class="tb" data-t="plan" onclick="ST(this)">Мой план</button>
+</div>
+
+<!-- ===== ВЫХОД ===== -->
+<div id="t-yield" class="tab on">
+  <div class="card">
+    <h2>Выход самогона из сахара</h2>
+    <p class="desc">Считает сколько литров готового продукта и сырца получится, и сколько отобрать голов</p>
+
+    <div class="field">
+      <label>Сахар (кг)</label>
+      <span class="hint">Суммарный вес сахара во всей варке. Если два бака по 6 кг — вводите 12.</span>
+      <input type="number" id="y-s" value="12" min="0.5" step="0.5" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Целевая крепость готового (%)</label>
+      <span class="hint">Какой градус хотите получить на выходе. Стандарт — 38–40%. Чем выше — тем меньше литров, но крепче.</span>
+      <input type="number" id="y-a" value="38" min="30" max="90" step="1" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Тип дрожжей</label>
+      <span class="hint">Влияет на КПД: сколько сахара дрожжи реально переработают в спирт. Турбо — самый высокий КПД.</span>
+      <select id="y-e">
+        <option value="0.94">Турбо дрожжи</option>
+        <option value="0.82">Спиртовые</option>
+        <option value="0.70">Хлебопекарные</option>
+      </select>
+    </div>
+
+    <button class="btn-calc" onclick="calcYield()">Рассчитать</button>
+  </div>
+  <div id="r-yield"></div>
+  <div class="hcard"><div class="hhead" id="hh-yield" onclick="TH('yield')">📋 История <span class="harrow">▼</span></div>
+    <div class="hbody" id="hb-yield"><div class="hempty" id="he-yield">Пока пусто</div><ul class="hlist" id="hl-yield"></ul>
+    <button class="hclear" onclick="CH('yield')">Очистить историю</button></div></div>
+</div>
+
+<!-- ===== БРАГА ===== -->
+<div id="t-mash" class="tab">
+  <div class="card">
+    <h2>Расчёт браги</h2>
+    <p class="desc">Считает сколько воды добавить, какая выйдет крепость браги и хватит ли места для пены</p>
+
+    <div class="field">
+      <label>Сахар (кг)</label>
+      <span class="hint">Количество сахара на ОДИН бак. Считайте каждый бак отдельно.</span>
+      <input type="number" id="m-s" value="6" min="0.5" step="0.5" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Воды добавить (л)</label>
+      <span class="hint">Чистая вода (кипячёная или покупная). Вводите сколько литров воды заливаете в бак — без учёта объёма сахара.</span>
+      <input type="number" id="m-w" value="18" min="1" step="0.5" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Объём бака (л)</label>
+      <span class="hint">Полный объём вашей ёмкости для брожения. У вас — 30 л.</span>
+      <input type="number" id="m-t" value="30" min="5" step="1" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Тип дрожжей</label>
+      <span class="hint">Турбо дрожжи выдерживают до 21% спирта и сбраживают за 2–10 дней. Хлебопекарные останавливаются на ~12%.</span>
+      <select id="m-e">
+        <option value="0.94">Турбо дрожжи</option>
+        <option value="0.82">Спиртовые</option>
+        <option value="0.70">Хлебопекарные</option>
+      </select>
+    </div>
+
+    <button class="btn-calc" onclick="calcMash()">Рассчитать</button>
+  </div>
+  <div id="r-mash"></div>
+  <div class="hcard"><div class="hhead" id="hh-mash" onclick="TH('mash')">📋 История <span class="harrow">▼</span></div>
+    <div class="hbody" id="hb-mash"><div class="hempty" id="he-mash">Пока пусто</div><ul class="hlist" id="hl-mash"></ul>
+    <button class="hclear" onclick="CH('mash')">Очистить историю</button></div></div>
+</div>
+
+<!-- ===== РАЗБАВЛЕНИЕ ===== -->
+<div id="t-dilute" class="tab">
+
+  <!-- MODE SWITCHER -->
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button id="dm-vol" class="dmode on" onclick="setDmode('vol')">До объёма</button>
+    <button id="dm-abv" class="dmode" onclick="setDmode('abv')">До крепости</button>
+  </div>
+
+  <!-- MODE: ДО ОБЪЁМА (для второй перегонки) -->
+  <div id="d-mode-vol">
+    <div class="card">
+      <h2>Разбавление до объёма</h2>
+      <p class="desc">Для второй перегонки: считает сколько воды добавить чтобы довести сырец до нужного объёма в кубе</p>
+
+      <div class="field">
+        <label>Объём сырца (л)</label>
+        <span class="hint">Сколько литров сырца собрали после первой перегонки. Обычно 18 л с двух баков по 6 кг.</span>
+        <input type="number" id="dv-syrec" value="18" min="0.1" step="0.5" inputmode="decimal">
+      </div>
+
+      <div class="field">
+        <label>Крепость сырца (%)</label>
+        <span class="hint">Средний градус сырца. Замерьте ареометром. Обычно 30–50% — зависит от когда остановили отбор.</span>
+        <input type="number" id="dv-abv" value="40" min="1" max="96" step="1" inputmode="decimal">
+      </div>
+
+      <div class="field">
+        <label>Нужный объём в кубе (л)</label>
+        <span class="hint">До какого объёма нужно довести — это 2/3 от объёма перегонного куба. Куб 37 л → заливать 26–27 л.</span>
+        <input type="number" id="dv-target" value="26" min="1" step="0.5" inputmode="decimal">
+      </div>
+
+      <button class="btn-calc" onclick="calcDilVol()">Рассчитать</button>
+    </div>
+    <div id="r-dilvol"></div>
+  </div>
+
+  <!-- MODE: ДО КРЕПОСТИ -->
+  <div id="d-mode-abv" style="display:none">
+    <div class="card">
+      <h2>Разбавление до крепости</h2>
+      <p class="desc">Считает сколько литров воды добавить чтобы снизить крепость до нужного процента</p>
+
+      <div class="field">
+        <label>Объём (л)</label>
+        <span class="hint">Сколько литров у вас есть сейчас. Например, 13 л готового самогона которые хотите разбавить до 40%.</span>
+        <input type="number" id="d-v" value="13" min="0.1" step="0.5" inputmode="decimal">
+      </div>
+
+      <div class="field">
+        <label>Текущая крепость (%)</label>
+        <span class="hint">Градус вашей жидкости прямо сейчас. Замерьте ареометром при 20°C. Готовый самогон после второй перегонки — обычно 55–65%.</span>
+        <input type="number" id="d-c1" value="60" min="1" max="96" step="1" inputmode="decimal">
+      </div>
+
+      <div class="field">
+        <label>Целевая крепость (%)</label>
+        <span class="hint">До какой крепости нужно разбавить. Для питья — 38–40%. Для настоек — 45–50%.</span>
+        <input type="number" id="d-c2" value="40" min="1" max="96" step="1" inputmode="decimal">
+      </div>
+
+      <button class="btn-calc" onclick="calcDilute()">Рассчитать</button>
+    </div>
+    <div id="r-dilute"></div>
+  </div>
+
+  <div class="hcard"><div class="hhead" id="hh-dilute" onclick="TH('dilute')">📋 История <span class="harrow">▼</span></div>
+    <div class="hbody" id="hb-dilute"><div class="hempty" id="he-dilute">Пока пусто</div><ul class="hlist" id="hl-dilute"></ul>
+    <button class="hclear" onclick="CH('dilute')">Очистить историю</button></div></div>
+</div>
+
+<!-- ===== ГОЛОВЫ ===== -->
+<div id="t-heads" class="tab">
+  <div class="card">
+    <h2>Головы и хвосты</h2>
+    <p class="desc">Считает сколько отобрать голов при второй перегонке и при какой крепости переходить на хвосты</p>
+
+    <div class="field">
+      <label>Сахар в варке (кг)</label>
+      <span class="hint">Суммарный сахар во всей варке — все баки вместе. Два бака по 6 кг = вводите 12.</span>
+      <input type="number" id="hd-s" value="12" min="0.5" step="0.5" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Объём в кубе на второй перегонке (л)</label>
+      <span class="hint">Сколько литров залито в перегонный куб — это сырец уже разбавленный водой. У вас обычно 26–27 л.</span>
+      <input type="number" id="hd-r" value="26" min="1" step="0.5" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Ожидаемый выход тела (л)</label>
+      <span class="hint">Примерный объём готового продукта из этой варки. Смотрите вкладку «Выход» или вводите свой опытный показатель.</span>
+      <input type="number" id="hd-p" value="13" min="0.5" step="0.5" inputmode="decimal">
+    </div>
+
+    <button class="btn-calc" onclick="calcHeads()">Рассчитать</button>
+  </div>
+  <div id="r-heads"></div>
+  <div class="hcard"><div class="hhead" id="hh-heads" onclick="TH('heads')">📋 История <span class="harrow">▼</span></div>
+    <div class="hbody" id="hb-heads"><div class="hempty" id="he-heads">Пока пусто</div><ul class="hlist" id="hl-heads"></ul>
+    <button class="hclear" onclick="CH('heads')">Очистить историю</button></div></div>
+</div>
+
+<!-- ===== СМЕШИВАНИЕ ===== -->
+<div id="t-blend" class="tab">
+  <div class="card">
+    <h2>Смешивание жидкостей</h2>
+    <p class="desc">Считает итоговую крепость при смешивании. Для разбавления водой — поставьте крепость второй жидкости = 0</p>
+
+    <div class="field">
+      <label>Объём 1 (л)</label>
+      <span class="hint">Первая жидкость — например, ваш самогон или сырец. Введите сколько литров.</span>
+      <input type="number" id="b-v1" value="18" min="0.1" step="0.5" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Крепость 1 (%)</label>
+      <span class="hint">Градус первой жидкости. Замерьте ареометром или спиртометром при 20°C.</span>
+      <input type="number" id="b-a1" value="60" min="0" max="96" step="1" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Объём 2 (л)</label>
+      <span class="hint">Вторая жидкость. Если разбавляете водой — введите сколько литров воды добавляете.</span>
+      <input type="number" id="b-v2" value="8" min="0.1" step="0.5" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Крепость 2 (%)</label>
+      <span class="hint">Градус второй жидкости. Если вторая жидкость — чистая вода, вводите 0.</span>
+      <input type="number" id="b-a2" value="0" min="0" max="96" step="1" inputmode="decimal">
+    </div>
+
+    <button class="btn-calc" onclick="calcBlend()">Рассчитать</button>
+  </div>
+  <div id="r-blend"></div>
+  <div class="hcard"><div class="hhead" id="hh-blend" onclick="TH('blend')">📋 История <span class="harrow">▼</span></div>
+    <div class="hbody" id="hb-blend"><div class="hempty" id="he-blend">Пока пусто</div><ul class="hlist" id="hl-blend"></ul>
+    <button class="hclear" onclick="CH('blend')">Очистить историю</button></div></div>
+</div>
+
+<!-- ===== МОЙ ПЛАН ===== -->
+<div id="t-plan" class="tab">
+  <div class="card">
+    <h2>Планировщик производства</h2>
+    <p class="desc">Считает сколько циклов, материалов и дней нужно чтобы достигнуть цели</p>
+
+    <div class="field">
+      <label>Цель: сколько литров готового продукта</label>
+      <span class="hint">Общий объём который хотите получить за всё время. Например, 200 л.</span>
+      <input type="number" id="p-g" value="200" min="1" step="10" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Количество баков</label>
+      <span class="hint">Общее число ёмкостей для брожения. У вас — 4 бака (2 пары). Вводите чётное число.</span>
+      <input type="number" id="p-b" value="4" min="2" step="2" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Сахар на один бак (кг)</label>
+      <span class="hint">Сколько кг сахара засыпаете в каждый бак браги. Сейчас у вас 6 кг, планируете попробовать 7 кг.</span>
+      <input type="number" id="p-s" value="6" min="1" step="0.5" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Выход готового с одной пары баков (л)</label>
+      <span class="hint">Сколько литров готового продукта выходит из второй перегонки одной пары (2 бака). При 6 кг/бак — 13 л, при 7 кг/бак — ~15 л.</span>
+      <input type="number" id="p-y" value="13" min="1" step="0.5" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Целевая крепость готового (%)</label>
+      <span class="hint">Крепость продукта на выходе после второй перегонки. У вас — 38%.</span>
+      <input type="number" id="p-a" value="38" min="30" max="90" step="1" inputmode="decimal">
+    </div>
+
+    <button class="btn-calc" onclick="calcPlan()">Рассчитать</button>
+  </div>
+  <div id="r-plan"></div>
+  <div class="hcard"><div class="hhead" id="hh-plan" onclick="TH('plan')">📋 История <span class="harrow">▼</span></div>
+    <div class="hbody" id="hb-plan"><div class="hempty" id="he-plan">Пока пусто</div><ul class="hlist" id="hl-plan"></ul>
+    <button class="hclear" onclick="CH('plan')">Очистить историю</button></div></div>
+</div>
+
+<script>
+const HK='smgn_v3';
+const MAX=20;
+function r1(n){return Math.round(n*10)/10}
+function r2(n){return Math.round(n*100)/100}
+function r0(n){return Math.round(n)}
+function ts(){return new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})}
+function v(id){return parseFloat(document.getElementById(id).value)}
+function sel(id){return document.getElementById(id).value}
+
+function ST(btn){
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('t-'+btn.dataset.t).classList.add('on');
+}
+
+function GH(){try{return JSON.parse(localStorage.getItem(HK))||{}}catch(e){return{}}}
+function SH(id,e){const h=GH();if(!h[id])h[id]=[];h[id].unshift(e);h[id]=h[id].slice(0,MAX);localStorage.setItem(HK,JSON.stringify(h));RH(id)}
+function CH(id){const h=GH();h[id]=[];localStorage.setItem(HK,JSON.stringify(h));RH(id)}
+function RH(id){
+  const h=(GH()[id])||[];
+  const ul=document.getElementById('hl-'+id);
+  const em=document.getElementById('he-'+id);
+  ul.innerHTML='';
+  em.style.display=h.length?'none':'';
+  h.forEach(e=>{
+    const li=document.createElement('li');li.className='hitem';
+    li.innerHTML='<div class="hi-t">'+e.t+'</div><div class="hi-i">'+e.i+'</div><div class="hi-r">'+e.r+'</div>';
+    ul.appendChild(li);
+  });
+}
+function TH(id){
+  const hd=document.getElementById('hh-'+id);
+  const hb=document.getElementById('hb-'+id);
+  hd.classList.toggle('open');hb.classList.toggle('open');
+  if(hb.classList.contains('open'))RH(id);
+}
+function SR(id,html){document.getElementById('r-'+id).innerHTML=html}
+function RB(title,rows,note,isWarn){
+  let h='<div class="result-box"><div class="rtitle">'+title+'</div>';
+  rows.forEach(([l,val])=>{h+='<div class="rrow"><span class="rl">'+l+'</span><span class="rv">'+val+'</span></div>'});
+  if(note)h+='<div class="'+(isWarn?'warn':'note')+'">'+note+'</div>';
+  return h+'</div>';
+}
+
+// 1. ВЫХОД
+function calcYield(){
+  const sg=v('y-s'),ab=v('y-a'),ef=parseFloat(sel('y-e'));
+  if(!sg||!ab||sg<=0||ab<=0){alert('Проверьте данные');return}
+  const pureEth=sg*0.511*ef;
+  const prod=r1(pureEth/(ab/100));
+  const syrec=r1(sg*1.5);
+  const heads=r2(sg*0.05);
+  const dext=r1(prod*3);
+  const effLbl={'0.94':'Турбо','0.82':'Спиртовые','0.70':'Хлебопекарные'}[sel('y-e')]||'';
+  SR('yield',RB('Расчёт выхода',[
+    ['Готового продукта ('+ab+'%)',prod+' л'],
+    ['Сырца (первая перегонка)',syrec+' л'],
+    ['Голов отобрать',heads+' л ('+r0(heads*1000)+' мл)'],
+    ['Декстрозы (3 г/л)',dext+' г'],
+  ],'Расчёт приблизительный. Реальный выход зависит от аппарата и техники отбора.'));
+  SH('yield',{t:ts(),i:sg+' кг · '+ab+'% · '+effLbl,r:'Продукт: '+prod+' л · Сырец: '+syrec+' л · Головы: '+heads+' л'});
+}
+
+// 2. БРАГА
+function calcMash(){
+  const sg=v('m-s'),wt=v('m-w'),tk=v('m-t'),ef=parseFloat(sel('m-e'));
+  if(!sg||!wt||sg<=0||wt<=0){alert('Проверьте данные');return}
+  const sugarVol=sg*0.62;
+  const totalVol=r1(wt+sugarVol);
+  const free=r1(tk-totalVol);
+  const freePct=r0(free/tk*100);
+  const pureEth=sg*0.511*ef;
+  const abvEst=r1(pureEth/totalVol*100);
+  const fillPct=r0(totalVol/tk*100);
+  const isOk=free>=tk*0.2;
+  SR('mash',RB('Состав браги',[
+    ['Воды',wt+' л'],
+    ['Объём сахара (примерно)',r1(sugarVol)+' л'],
+    ['Итого браги',totalVol+' л'],
+    ['Заполнение бака',fillPct+'% (свободно '+free+' л)'],
+    ['Крепость браги ~',abvEst+'%'],
+  ],isOk?'✅ Места для пены достаточно ('+freePct+'% свободно)':'⚠️ Мало места для пены! Турбо дрожжи сильно пенятся — оставляйте минимум 25–30% свободными.',!isOk));
+  SH('mash',{t:ts(),i:sg+' кг · '+wt+' л воды · бак '+tk+' л',r:'Брага: '+totalVol+' л · ~'+abvEst+'% · свободно '+free+' л'});
+}
+
+// 3. РАЗБАВЛЕНИЕ (всё в литрах)
+function calcDilute(){
+  const vol=v('d-v'),c1=v('d-c1'),c2=v('d-c2');
+  if(!vol||!c1||!c2||c1<=c2){alert('Целевая крепость должна быть меньше текущей');return}
+  const waterAdd=r2(vol*(c1-c2)/c2);
+  const finalVol=r2(vol+waterAdd);
+  const finalVolReal=r2(finalVol*0.985);
+  const check=r1(vol*c1/finalVol);
+  SR('dilute',RB('Разбавление',[
+    ['Добавить воды',waterAdd+' л'],
+    ['Итоговый объём',finalVol+' л'],
+    ['С учётом усадки ~1.5%',finalVolReal+' л'],
+    ['Проверка крепости',check+'%'],
+  ],'Добавляйте воду постепенно и проверяйте ареометром. Используйте воду без хлора — кипячёную или покупную.'));
+  SH('dilute',{t:ts(),i:vol+' л · '+c1+'% → '+c2+'%',r:'Воды добавить: '+waterAdd+' л · Итого: '+finalVol+' л'});
+}
+
+// 4. ГОЛОВЫ
+function calcHeads(){
+  const sg=v('hd-s'),rw=v('hd-r'),pd=v('hd-p');
+  if(!sg||sg<=0){alert('Введите количество сахара');return}
+  const heads=r2(sg*0.05);
+  const headsPct=r1(heads/pd*100);
+  const bodyEst=r1(pd-heads*1.1);
+  SR('heads',RB('Отбор фракций',[
+    ['Голов отобрать',heads+' л ('+r0(heads*1000)+' мл)'],
+    ['Это от объёма тела',headsPct+'%'],
+    ['Тело (после отбора голов)',bodyEst+' л'],
+    ['Хвосты: переходить при',30+'% — жёсткий отсев'],
+    ['Хвосты: переходить при',35+'% — мягкий (рекомендую)'],
+  ],'Голова пахнет ацетоном или лаком — это нормально, просто выливайте. Хвосты мутнеют и становятся жирными на ощупь. Хвосты можно добавить к следующей первой перегонке.'));
+  SH('heads',{t:ts(),i:sg+' кг · куб '+rw+' л · тело '+pd+' л',r:'Головы: '+heads+' л ('+r0(heads*1000)+' мл) · Тело ~'+bodyEst+' л'});
+}
+
+// 5. СМЕШИВАНИЕ (всё в литрах)
+function calcBlend(){
+  const v1=v('b-v1'),a1=v('b-a1'),v2=v('b-v2'),a2=v('b-a2');
+  if(!v1||!v2||v1<=0||v2<=0){alert('Проверьте данные');return}
+  const totalVol=r2(v1+v2);
+  const resAbv=r1((v1*a1+v2*a2)/totalVol);
+  const realVol=r2(totalVol*(a2===0?0.985:1.0));
+  SR('blend',RB('Результат смешивания',[
+    ['Объём смеси',totalVol+' л'],
+    ['С учётом усадки',realVol+' л'],
+    ['Итоговая крепость',resAbv+'%'],
+  ],'При разбавлении водой объём немного уменьшается (~1.5%) из-за гидратации молекул спирта. Проверяйте ареометром.'));
+  SH('blend',{t:ts(),i:v1+' л @ '+a1+'% + '+v2+' л @ '+a2+'%',r:'Итого: '+totalVol+' л · '+resAbv+'%'});
+}
+
+// 6. МОЙ ПЛАН
+function calcPlan(){
+  const goal=v('p-g'),tanks=parseInt(document.getElementById('p-b').value),
+        sg=v('p-s'),yp=v('p-y'),ab=v('p-a');
+  if(!goal||!tanks||!sg||!yp||tanks<2){alert('Проверьте данные');return}
+  const pairs=Math.floor(tanks/2);
+  const lpc=r1(yp*pairs);
+  const cycles=Math.ceil(goal/lpc);
+  const days=3+cycles*3;
+  const sugarTotal=r1(cycles*tanks*sg);
+  const yeastTotal=cycles*tanks;
+  const actualL=r1(cycles*lpc);
+  const dext=r1(actualL*3);
+  const sugarCost=r0(sugarTotal*57);
+  const yeastCost=r0(yeastTotal*300);
+  SR('plan',RB('Производственный план',[
+    ['Пар баков',pairs+' пары → '+lpc+' л за цикл'],
+    ['Циклов нужно',cycles],
+    ['Дней всего',days],
+    ['Фактически получится',actualL+' л @ '+ab+'%'],
+    ['Сахара итого',sugarTotal+' кг'],
+    ['Дрожжей итого',yeastTotal+' пачек'],
+    ['Декстрозы итого',dext+' г'],
+    ['Примерные затраты',(sugarCost+yeastCost).toLocaleString('ru-RU')+'₽'],
+  ],'Цикл 3 дня: день 1 — первые перегонки 4 баков (12ч) + сразу перезаряжаем брагу. Дни 2–3 — вторые перегонки (14ч каждая).'));
+  SH('plan',{t:ts(),i:'Цель '+goal+' л · '+tanks+' баков · '+sg+' кг/бак · '+yp+' л/пара',r:cycles+' циклов · '+days+' дней · '+sugarTotal+' кг сахара'});
+}
+
+// DILUTE MODE SWITCHER
+function setDmode(m){
+  document.getElementById('dm-vol').classList.toggle('on',m==='vol');
+  document.getElementById('dm-abv').classList.toggle('on',m==='abv');
+  document.getElementById('d-mode-vol').style.display=m==='vol'?'':'none';
+  document.getElementById('d-mode-abv').style.display=m==='abv'?'':'none';
+}
+// РАЗБАВЛЕНИЕ ДО ОБЪЁМА
+function calcDilVol(){
+  const syrec=v('dv-syrec'),abvIn=v('dv-abv'),target=v('dv-target');
+  if(!syrec||!abvIn||!target||syrec<=0||target<=syrec){alert('Нужный объём должен быть больше текущего');return;}
+  const waterAdd=r2(target-syrec);
+  const abvResult=r1(syrec*abvIn/target);
+  const fillPct=r0(target/37*100);
+  SR('dilvol',RB('До объёма — вторая перегонка',[
+    ['Воды добавить',waterAdd+' л'],
+    ['Итого в кубе',target+' л'],
+    ['Крепость в кубе ~',abvResult+'%'],
+    ['Заполнение 37л куба',fillPct+'% (норма: 65–70%)'],
+  ],'Добавляй воду постепенно, перемешивай. Куб заполняй не более чем на 2/3 — при кипении жидкость расширяется.'));
+  SH('dilute',{t:ts(),i:'Сырец '+syrec+' л @ '+abvIn+'% → куб '+target+' л',r:'Воды: '+waterAdd+' л · В кубе: '+abvResult+'%'});
+}
+['yield','mash','dilute','heads','blend','plan'].forEach(id=>RH(id));
+</script>
+</body>
+</html>
