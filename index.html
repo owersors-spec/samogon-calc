@@ -73,6 +73,7 @@ input[type=number]:focus,select:focus{outline:none;border-color:#4ade80;backgrou
   <button class="tb" data-t="heads" onclick="ST(this)">Головы</button>
   <button class="tb" data-t="blend" onclick="ST(this)">Смешивание</button>
   <button class="tb" data-t="plan" onclick="ST(this)">Мой план</button>
+  <button class="tb" data-t="temp" onclick="ST(this)">Ареометр</button>
 </div>
 
 <!-- ===== ВЫХОД ===== -->
@@ -229,24 +230,40 @@ input[type=number]:focus,select:focus{outline:none;border-color:#4ade80;backgrou
 <div id="t-heads" class="tab">
   <div class="card">
     <h2>Головы и хвосты</h2>
-    <p class="desc">Считает сколько отобрать голов при второй перегонке и при какой крепости переходить на хвосты</p>
+    <p class="desc">Расчёт по абсолютному спирту (АС) — самый точный метод. Сначала считаем сколько чистого спирта в кубе, затем берём заданный % как головы.</p>
 
     <div class="field">
-      <label>Сахар в варке (кг)</label>
-      <span class="hint">Суммарный сахар во всей варке — все баки вместе. Два бака по 6 кг = вводите 12.</span>
-      <input type="number" id="hd-s" value="12" min="0.5" step="0.5" inputmode="decimal">
+      <label>Объём в кубе (л)</label>
+      <span class="hint">Сколько литров залито в перегонный куб — сырец разбавленный водой. У вас обычно 26–27 л.</span>
+      <input type="number" id="hd-v" value="26" min="1" step="0.5" inputmode="decimal">
     </div>
 
     <div class="field">
-      <label>Объём в кубе на второй перегонке (л)</label>
-      <span class="hint">Сколько литров залито в перегонный куб — это сырец уже разбавленный водой. У вас обычно 26–27 л.</span>
-      <input type="number" id="hd-r" value="26" min="1" step="0.5" inputmode="decimal">
+      <label>Крепость в кубе (%)</label>
+      <span class="hint">Замерьте ареометром после разбавления. Обычно 20–30% — зависит от крепости сырца и сколько воды добавили.</span>
+      <input type="number" id="hd-a" value="25" min="5" max="70" step="1" inputmode="decimal">
     </div>
 
     <div class="field">
-      <label>Ожидаемый выход тела (л)</label>
-      <span class="hint">Примерный объём готового продукта из этой варки. Смотрите вкладку «Выход» или вводите свой опытный показатель.</span>
-      <input type="number" id="hd-p" value="13" min="0.5" step="0.5" inputmode="decimal">
+      <label>Процент отбора голов от АС</label>
+      <span class="hint">Сколько % от абсолютного спирта отсечь как головы. 8% — мягко (первач), 10% — стандарт, 15% — строго (для качества). Чем больше отсекаете — тем чище продукт, но меньше выход.</span>
+      <select id="hd-pct">
+        <option value="5">5% — очень мягко</option>
+        <option value="8">8% — мягкий</option>
+        <option value="10" selected>10% — стандарт</option>
+        <option value="12">12% — строгий</option>
+        <option value="15">15% — очень строгий</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Хвосты: переходить при (% в струе)</label>
+      <span class="hint">Когда крепость в струе падает до этого значения — переключаетесь на сбор хвостов. 40% — стандарт, 45% — мягче (больше выход, чуть хуже качество).</span>
+      <select id="hd-ta">
+        <option value="30">30% — очень строго</option>
+        <option value="40" selected>40% — стандарт</option>
+        <option value="45">45% — мягко</option>
+      </select>
     </div>
 
     <button class="btn-calc" onclick="calcHeads()">Рассчитать</button>
@@ -255,6 +272,33 @@ input[type=number]:focus,select:focus{outline:none;border-color:#4ade80;backgrou
   <div class="hcard"><div class="hhead" id="hh-heads" onclick="TH('heads')">📋 История <span class="harrow">▼</span></div>
     <div class="hbody" id="hb-heads"><div class="hempty" id="he-heads">Пока пусто</div><ul class="hlist" id="hl-heads"></ul>
     <button class="hclear" onclick="CH('heads')">Очистить историю</button></div></div>
+</div>
+
+
+<!-- ===== АРЕОМЕТР ===== -->
+<div id="t-temp" class="tab">
+  <div class="card">
+    <h2>Коррекция ареометра по температуре</h2>
+    <p class="desc">Ареометр точен только при 20°C. Если жидкость теплее или холоднее — показания врут. Вводите что показал прибор и при какой температуре — получаете реальную крепость.</p>
+
+    <div class="field">
+      <label>Показание ареометра (%)</label>
+      <span class="hint">Что показывает прибор прямо сейчас. Именно то число которое вы видите на шкале — без поправок.</span>
+      <input type="number" id="tc-m" value="40" min="1" max="96" step="1" inputmode="decimal">
+    </div>
+
+    <div class="field">
+      <label>Температура жидкости (°C)</label>
+      <span class="hint">Температура самогона в момент замера. Измерьте термометром. При 20°C коррекция не нужна — прибор точен.</span>
+      <input type="number" id="tc-t" value="20" min="5" max="50" step="1" inputmode="decimal">
+    </div>
+
+    <button class="btn-calc" onclick="calcTemp()">Рассчитать</button>
+  </div>
+  <div id="r-temp"></div>
+  <div class="hcard"><div class="hhead" id="hh-temp" onclick="TH('temp')">📋 История <span class="harrow">▼</span></div>
+    <div class="hbody" id="hb-temp"><div class="hempty" id="he-temp">Пока пусто</div><ul class="hlist" id="hl-temp"></ul>
+    <button class="hclear" onclick="CH('temp')">Очистить историю</button></div></div>
 </div>
 
 <!-- ===== СМЕШИВАНИЕ ===== -->
@@ -443,21 +487,33 @@ function calcDilute(){
   SH('dilute',{t:ts(),i:vol+' л · '+c1+'% → '+c2+'%',r:'Воды добавить: '+waterAdd+' л · Итого: '+finalVol+' л'});
 }
 
-// 4. ГОЛОВЫ
+// 4. ГОЛОВЫ (по абсолютному спирту)
 function calcHeads(){
-  const sg=v('hd-s'),rw=v('hd-r'),pd=v('hd-p');
-  if(!sg||sg<=0){alert('Введите количество сахара');return}
-  const heads=r2(sg*0.05);
-  const headsPct=r1(heads/pd*100);
-  const bodyEst=r1(pd-heads*1.1);
+  const vol=v('hd-v'),abv=v('hd-a');
+  const pct=parseFloat(document.getElementById('hd-pct').value);
+  const tailsAbv=parseInt(document.getElementById('hd-ta').value);
+  if(!vol||!abv||vol<=0||abv<=0){alert('Введите объём и крепость');return}
+  // Абсолютный спирт в кубе
+  const ac=r2(vol*abv/100);
+  // Головы: pct% от АС, выходят при ~77% ABV
+  const headsAC=r2(ac*pct/100);
+  const headsL=r2(headsAC/0.77);
+  const headsMl=r0(headsL*1000);
+  // Хвосты оценка: ~7% от АС при отсечке 40%
+  const tailsCoeff=tailsAbv===30?0.04:tailsAbv===40?0.07:0.10;
+  const tailsAC=r2(ac*tailsCoeff);
+  // Тело: остаток
+  const bodyAC=r2(ac-headsAC-tailsAC);
+  const bodyL=r1(bodyAC/0.58); // тело выходит со средней крепостью ~58%
+  const pctLabel={5:'5% очень мягко',8:'8% мягкий',10:'10% стандарт',12:'12% строгий',15:'15% очень строгий'}[pct]||pct+'%';
   SR('heads',RB('Отбор фракций',[
-    ['Голов отобрать',heads+' л ('+r0(heads*1000)+' мл)'],
-    ['Это от объёма тела',headsPct+'%'],
-    ['Тело (после отбора голов)',bodyEst+' л'],
-    ['Хвосты: переходить при',30+'% — жёсткий отсев'],
-    ['Хвосты: переходить при',35+'% — мягкий (рекомендую)'],
-  ],'Голова пахнет ацетоном или лаком — это нормально, просто выливайте. Хвосты мутнеют и становятся жирными на ощупь. Хвосты можно добавить к следующей первой перегонке.'));
-  SH('heads',{t:ts(),i:sg+' кг · куб '+rw+' л · тело '+pd+' л',r:'Головы: '+heads+' л ('+r0(heads*1000)+' мл) · Тело ~'+bodyEst+' л'});
+    ['АС в кубе (абсолютный спирт)',ac+' л'],
+    ['Голов отобрать ('+pctLabel+')',headsL+' л ('+headsMl+' мл)'],
+    ['Тело ориентировочно',bodyL+' л'],
+    ['Хвосты: переходить при',tailsAbv+'% в струе'],
+    ['АС в хвостах (вернуть в след. варку)',tailsAC+' л чистого спирта'],
+  ],'Голова пахнет ацетоном. Хвосты — мутные, жирные на ощупь. Хвосты собирайте отдельно и добавляйте к следующей первой перегонке — там весь спирт.'));
+  SH('heads',{t:ts(),i:'Куб '+vol+' л @ '+abv+'% · головы '+pct+'% · хвосты от '+tailsAbv+'%',r:'АС: '+ac+' л · Головы: '+headsL+' л · Тело ~'+bodyL+' л'});
 }
 
 // 5. СМЕШИВАНИЕ (всё в литрах)
@@ -525,7 +581,26 @@ function calcDilVol(){
   ],'Добавляй воду постепенно, перемешивай. Куб заполняй не более чем на 2/3 — при кипении жидкость расширяется.'));
   SH('dilute',{t:ts(),i:'Сырец '+syrec+' л @ '+abvIn+'% → куб '+target+' л',r:'Воды: '+waterAdd+' л · В кубе: '+abvResult+'%'});
 }
-['yield','mash','dilute','heads','blend','plan'].forEach(id=>RH(id));
+// 7. КОРРЕКЦИЯ АРЕОМЕТРА
+function calcTemp(){
+  const meas=v('tc-m'),temp=v('tc-t');
+  if(!meas||temp===null||temp===undefined||isNaN(temp)){alert('Введите данные');return}
+  // Формула коррекции по ГОСТ (приближение)
+  const corr=r2((temp-20)*(0.3+0.001*meas));
+  const actual=r1(meas+corr);
+  const dir=temp>20?'выше 20°C → жидкость расширилась → реальная крепость ВЫШЕ показания':
+             temp<20?'ниже 20°C → жидкость сжалась → реальная крепость НИЖЕ показания':
+             'ровно 20°C — поправка не нужна, показание точное';
+  const corrStr=(corr>=0?'+':'')+corr+'%';
+  SR('temp',RB('Реальная крепость',[
+    ['Показание прибора',meas+'%'],
+    ['Температура',temp+'°C'],
+    ['Поправка',corrStr],
+    ['Реальная крепость',actual+'%'],
+  ],dir));
+  SH('temp',{t:ts(),i:'Ареометр: '+meas+'% @ '+temp+'°C',r:'Реальная крепость: '+actual+'% (поправка '+corrStr+')'});
+}
+['yield','mash','dilute','heads','blend','plan','temp'].forEach(id=>RH(id));
 </script>
 </body>
 </html>
